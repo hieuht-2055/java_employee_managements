@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: employee-management
+
+server:
+  port: 8080
+
+app:
+  employee-code-prefix: EMP     # Lab 2: UtilityService đọc qua @Value
