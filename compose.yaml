@@ -1,0 +1,18 @@
+# Postgres cho mini project. Cổng 5433 để không đụng playground (5432) khi chạy cùng lúc.
+# docker compose up -d      → bật
+# docker compose down -v    → xoá sạch dữ liệu (≈ rails db:drop)
+services:
+  postgres:
+    image: postgres:17
+    container_name: ems-postgres
+    environment:
+      POSTGRES_DB: employee_db
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - ems-pgdata:/var/lib/postgresql/data
+
+volumes:
+  ems-pgdata:

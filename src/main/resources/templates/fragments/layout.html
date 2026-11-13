@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<!-- Fragment dùng chung (≈ app/views/shared/_*.html.erb). Không controller nào render file này trực tiếp.
+     Gọi: th:replace="~{fragments/layout :: head('Tiêu đề')}" -->
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title} + ' · Employee Management'">Employee Management</title>
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+
+<body>
+
+<header th:fragment="header" class="site-header">
+    <strong>Employee Management</strong>
+    <nav>
+        <a th:href="@{/employees/list}">Danh sách</a>
+        <a th:href="@{/employees/add}">+ Thêm nhân viên</a>
+        <a th:href="@{/employees/search}">Tìm kiếm</a>
+    </nav>
+</header>
+
+<!-- Bảng nhân viên, dùng lại ở trang list và search. Tham số: employees (List<EmployeeResponse>) -->
+<table th:fragment="employeeTable(employees)">
+    <thead>
+    <tr><th>Mã</th><th>Tên</th><th>Email</th><th>Phòng ban</th></tr>
+    </thead>
+    <tbody>
+    <tr th:each="e : ${employees}">
+        <td th:text="${e.code}">EMP0001</td>
+        <td th:text="${e.name}">Nguyễn Văn An</td>
+        <td th:text="${e.email}">an@example.com</td>
+        <td th:text="${e.departmentName}">IT</td>
+    </tr>
+    <tr th:if="${#lists.isEmpty(employees)}">
+        <td colspan="4" class="empty">Không có nhân viên nào.</td>
+    </tr>
+    </tbody>
+</table>
+
+<footer th:fragment="footer" class="site-footer">
+    <p>&copy; <span th:text="${#temporals.year(#temporals.createNow())}">2026</span> Employee Management System</p>
+</footer>
+
+</body>
+</html>

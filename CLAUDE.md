@@ -27,7 +27,7 @@
 | Java | 25 (Temurin, qua SDKMAN) |
 | Spring Boot | **4.1.2** (Spring Framework 7.0.10, Spring Data JPA 4.1.2, Hibernate 7.4.13, Spring Security 7, HikariCP 7) |
 | Build | Maven wrapper `./mvnw` (có `spring-boot-starter-parent` → cờ `-parameters` đã bật) |
-| DB | Chưa dùng (Lab 1–3 lưu in-memory). Từ Lab 4: PostgreSQL 17 qua Docker Compose, database `employee_db`, user `dev` / password `dev` |
+| DB | PostgreSQL 17 qua Docker Compose (`compose.yaml`, container `ems-postgres`, **cổng 5433** để không đụng playground 5432), database `employee_db`, user `dev` / password `dev`. Schema do Flyway quản lý (`db/migration`), `ddl-auto: validate` |
 | Project | `~/environment/java_employee_managements`, artifact `employee-management`, package `com.example.employeemanagement` |
 | Playground (tham khảo) | `~/environment/java-spring-learning`, package `com.example.playground` |
 
@@ -52,7 +52,7 @@ docker compose up -d                 # bật Postgres (sau mỗi lần khởi đ
 ./mvnw spring-boot:run               # chạy
 ./mvnw clean spring-boot:run         # khi đổi pom.xml
 ./mvnw dependency:tree | grep -i <tên>
-docker exec -it playground-postgres psql -U dev -d employee_db   # ≈ rails dbconsole
+docker exec -it ems-postgres psql -U dev -d employee_db   # ≈ rails dbconsole
 docker compose down -v               # reset sạch DB (≈ rails db:drop)
 ```
 
@@ -191,6 +191,11 @@ Phần học theo slide đã xong (tới Thymeleaf fragment). Giờ chuyển san
 - `th:errorclass` trên `<div>` (không có `th:field`/`name`) → TemplateProcessingException (slide nói "hoặc phần tử con gần": sai). `th:errors` không tự sinh `<span>`, nó thay nội dung thẻ chứa nó và xoá thẻ khi không lỗi → bọc `th:if` là thừa. `@NotEmpty` cho lọt `"   "` → dùng `@NotBlank`.
 - Sửa template trong `src/` khi app đang chạy bằng `spring-boot:run` không có hiệu lực ngay: app đọc `target/classes` → `./mvnw resources:resources` (hoặc IDE build) rồi F5.
 - Fragment khai báo tham số `footer(year)` mà gọi `:: footer` → lỗi "declares parameters, but fragment selection did not specify any". `th:include` đã deprecated (WARN) và bỏ thẻ gốc nên `th:text` trên thẻ gốc không chạy. Thiếu `~{...}` → WARN "Deprecated unwrapped fragment expression". Fragment định nghĩa trong trang thường cũng bị render → bọc `th:remove="all"`.
+- JPQL `:param is null or ... like concat('%', :param, '%')` với Postgres: param null → Hibernate gửi null không kiểu, Postgres đoán `bytea` → `function lower(bytea) does not exist`. Sửa: `cast(:param as string)`.
+- Validation (`@Email`) chạy TRƯỚC khi service chuẩn hoá dữ liệu → `" a@b.com"` (có dấu cách) bị 400.
+- Trang lỗi chung phải là `templates/error.html` (gốc), KHÔNG phải `templates/error/error.html`. Thứ tự: `error/400.html` → `error/4xx.html` → `error.html` → Whitelabel. Curl không gửi `Accept: text/html` nên nhận JSON thay vì trang lỗi.
+- Flash/session lần đầu → Tomcat nhét `;jsessionid=` vào URL redirect → `server.servlet.session.tracking-modes: cookie`.
+- Boot 4: Flyway cần `spring-boot-starter-flyway` (+ `flyway-database-postgresql`); chỉ `flyway-core` thì không tự chạy. Test slice tách module: `spring-boot-starter-data-jpa-test` (`org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest`), `spring-boot-starter-webmvc-test` (`org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc`). Testcontainers 2.x: artifact `testcontainers-postgresql`, class `org.testcontainers.postgresql.PostgreSQLContainer`.
 - Trong `GlobalExceptionHandler` / class lồng: class lồng không `static` là inner class → bên ngoài không thấy tên.
 
 ---
@@ -211,18 +216,22 @@ Phần học theo slide đã xong (tới Thymeleaf fragment). Giờ chuyển san
 
 ## 9. Trạng thái mini project hiện tại
 
-**Đã xong: Lab 1, 2, 3** (12/11/2026). Dependency: `spring-boot-starter-webmvc`, `spring-security-crypto` (chỉ để có `PasswordEncoder`, chưa bật Security), `spring-boot-starter-test`.
+**Đã xong: Lab 1–6** (13/11/2026). Chạy: `docker compose up -d && ./mvnw spring-boot:run`; test: `./mvnw test` (28 test, cần Docker cho Testcontainers).
 
 | Lab | File | Nội dung |
 |---|---|---|
 | 1 | `hello/HelloController` | `GET /hello`, `GET /hello?name=X` |
-| 2 | `common/UtilityService` | `@Service`: `generateEmployeeCode` (EMP0001, prefix từ `app.employee-code-prefix`), `formatName`, `normalizeEmail` |
-| 2 | `config/AppConfig` | `@Bean PasswordEncoder` (BCrypt 10) trong `@Configuration` |
-| 2 | `demo/BeanDemoController` | Inject 2 bean trên: `GET /api/demo/password?raw=`, `GET /api/demo/format?name=` |
-| 3 | `employee/*` | `Employee` (id, code, name, email, department), `InMemoryEmployeeRepository` (`@Repository`, `ConcurrentHashMap`), `EmployeeService`, `EmployeeController`, DTO `CreateEmployeeRequest` / `EmployeeResponse` |
+| 2 | `common/UtilityService`, `config/AppConfig`, `demo/BeanDemoController` | `@Service` sinh mã EMP0001 / format tên / chuẩn hoá email; `@Bean PasswordEncoder` (chỉ `spring-security-crypto`, chưa bật Security); `/api/demo/password`, `/api/demo/format` |
+| 4 | `db/migration/V1__create_department_and_employee.sql`, `V2__seed_departments.sql` | Bảng `department`, `employee` (id, code, name, email unique, department_id FK); seed IT/HR/Sales |
+| 4 | `department/*` | Entity `Department`, `DepartmentRepository`, `DepartmentService` (`getEntity` cho EmployeeService), `GET/POST /api/departments` |
+| 4 | `employee/Employee`, `EmployeeRepository` | `@ManyToOne(LAZY)`; `search(name, departmentId)` bằng `@Query` + JOIN FETCH (null = bỏ lọc); `findWithDepartmentById` (`@EntityGraph`) |
+| 4–5 | `employee/EmployeeService`, `EmployeeController` | CRUD `/api/employees` (GET list `?name=&departmentId=`, GET id, POST 201, PUT, DELETE 204); code gán sau INSERT (dirty checking UPDATE) |
+| 5 | `employee/dto/EmployeeRequest` | `@NotBlank`, `@Email`, `@Size`, `@NotNull departmentId` |
+| 5 | `common/GlobalApiExceptionHandler` | `@RestControllerAdvice(annotations = RestController.class)` kế thừa `ResponseEntityExceptionHandler`: 400 lỗi field (`errors`), 400 JSON hỏng / sai kiểu, 404 `ResourceNotFoundException`, 409 `DuplicateResourceException`, 500 catch-all |
+| 5 | `common/ResourceNotFoundException`, `DuplicateResourceException` | Có `@ResponseStatus` → trang web dùng `templates/error/404.html`, `templates/error.html` |
+| 6 | `employee/EmployeePageController`, `EmployeeForm` | `/employees/list`, `/employees/add` (GET form, POST validate + PRG + flash, email trùng → `rejectValue`), `/employees/search?name=&departmentId=`; `@ModelAttribute("departments")` |
+| 6 | `templates/fragments/layout.html`, `employees/{list,form,search}.html`, `static/css/app.css` | Fragment `head(title)`, `header`, `employeeTable(employees)`, `footer` |
 
-**API Lab 3**: `GET /api/employees[?department=IT]`, `GET /api/employees/{id}` (404 qua `ResponseEntity.notFound()`), `POST /api/employees` (201 + `Location`).
+**Test** (`src/test`): `TestcontainersConfiguration` (Postgres 17, `@ServiceConnection`), `EmployeeRepositoryTest` (`@DataJpaTest`), `EmployeeApiTest`, `EmployeePageTest`, `HelloAndBeanDemoTest` (`@SpringBootTest` + `@AutoConfigureMockMvc` + `@Transactional` rollback), `UtilityServiceTest` (unit).
 
-**Test**: `UtilityServiceTest` (unit), `EmployeeApiTest` (`@SpringBootTest` + `MockMvcBuilders.webAppContextSetup`, `@DirtiesContext` vì repository in-memory). Chạy `./mvnw test`.
-
-**Lab 4 cần làm**: thêm `spring-boot-starter-data-jpa`, `postgresql`, `compose.yaml`, Flyway; `Employee` → `@Entity`, department String → entity `Department` (`@ManyToOne` LAZY); xoá `InMemoryEmployeeRepository` thay bằng `JpaRepository`; tìm kiếm theo tên/phòng ban; đổi test sang `@DataJpaTest`/Testcontainers.
+**Lab 7 cần làm**: log (SLF4J) khi thêm/sửa/xoá nhân viên trong `EmployeeService`; tách `application-dev.yml` / `application-prod.yml` (datasource, log level), seed nhân viên mẫu cho profile `dev`.

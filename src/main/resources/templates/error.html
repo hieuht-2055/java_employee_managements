@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<!-- Trang lỗi chung. Boot tìm theo thứ tự: error/400.html → error/4xx.html → error.html (file này).
+     Biến có sẵn: status, error, path, timestamp -->
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Có lỗi xảy ra')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main>
+    <h1><span th:text="${status}">500</span> · <span th:text="${error}">Lỗi</span></h1>
+    <p>Có lỗi khi xử lý yêu cầu tới <code th:text="${path}">/abc</code>.</p>
+    <p><a th:href="@{/employees/list}">Về danh sách nhân viên</a></p>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

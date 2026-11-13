@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<!-- Boot tự render templates/error/404.html khi trang HTML trả 404 (≈ public/404.html của Rails) -->
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Không tìm thấy')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main>
+    <h1>404 · Không tìm thấy trang</h1>
+    <p>Đường dẫn <code th:text="${path}">/abc</code> không tồn tại.</p>
+    <p><a th:href="@{/employees/list}">Về danh sách nhân viên</a></p>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

@@ -1,0 +1,20 @@
+/* Phục vụ ở URL /css/app.css (≈ thư mục public/ của Rails) */
+:root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+body { max-width: 860px; margin: 1.5rem auto; padding: 0 1rem; }
+.site-header { display: flex; gap: 1.5rem; align-items: center; padding-bottom: .75rem; border-bottom: 1px solid #8886; }
+.site-header nav { display: flex; gap: 1rem; }
+.site-footer { margin-top: 2rem; padding-top: .5rem; border-top: 1px solid #8886; opacity: .7; font-size: .9rem; }
+table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+th, td { border: 1px solid #8884; padding: .5rem .75rem; text-align: left; }
+td.empty { text-align: center; opacity: .7; }
+.field { margin: .75rem 0; }
+.field label { display: block; font-weight: 600; margin-bottom: .25rem; }
+.field input, .field select { padding: .4rem; min-width: 280px; }
+.search-form { display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; }
+.search-form .field input, .search-form .field select { min-width: 200px; }
+button { padding: .45rem 1rem; cursor: pointer; }
+.invalid { border: 2px solid #d33; }
+.error { color: #d33; display: block; }
+.errors { border: 1px solid #d33; padding: .5rem .75rem; color: #d33; }
+.has-error label { color: #d33; }
+.flash { background: #2a24; padding: .5rem .75rem; }

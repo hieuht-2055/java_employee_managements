@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Danh sách nhân viên')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+
+<main>
+    <h1>Danh sách nhân viên</h1>
+
+    <!-- Flash từ RedirectAttributes.addFlashAttribute("message", ...) -->
+    <p class="flash" th:if="${message}" th:text="${message}">Đã thêm nhân viên</p>
+
+    <p>Tổng: <strong th:text="${#lists.size(employees)}">0</strong> nhân viên</p>
+
+    <table th:replace="~{fragments/layout :: employeeTable(${employees})}"></table>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

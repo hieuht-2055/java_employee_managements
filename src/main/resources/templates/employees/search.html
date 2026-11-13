@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Tìm kiếm nhân viên')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+
+<main>
+    <h1>Tìm kiếm nhân viên</h1>
+
+    <!-- Form GET: tham số nằm trên URL nên có thể bookmark / chia sẻ kết quả -->
+    <form th:action="@{/employees/search}" method="get" class="search-form">
+        <div class="field">
+            <label for="name">Tên</label>
+            <input type="text" id="name" name="name" th:value="${name}" placeholder="Nhập một phần tên">
+        </div>
+        <div class="field">
+            <label for="departmentId">Phòng ban</label>
+            <select id="departmentId" name="departmentId">
+                <option value="">-- Tất cả --</option>
+                <option th:each="d : ${departments}" th:value="${d.id}" th:text="${d.name}"
+                        th:selected="${d.id == departmentId}">IT</option>
+            </select>
+        </div>
+        <button type="submit">Tìm</button>
+    </form>
+
+    <section th:if="${searched}">
+        <h2>Kết quả: <span th:text="${#lists.size(employees)}">0</span> nhân viên</h2>
+        <table th:replace="~{fragments/layout :: employeeTable(${employees})}"></table>
+    </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

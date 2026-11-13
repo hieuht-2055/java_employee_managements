@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Thêm nhân viên')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+
+<main>
+    <h1>Thêm nhân viên</h1>
+
+    <!-- th:object phải khớp tên @ModelAttribute("employeeForm") ở controller -->
+    <form th:action="@{/employees/add}" th:object="${employeeForm}" method="post" novalidate>
+
+        <div class="errors" th:if="${#fields.hasAnyErrors()}">
+            Vui lòng sửa các lỗi bên dưới.
+        </div>
+
+        <div class="field" th:classappend="${#fields.hasErrors('name')} ? 'has-error'">
+            <label for="name">Tên</label>
+            <input type="text" th:field="*{name}" th:errorclass="invalid" placeholder="Nguyễn Văn An">
+            <!-- th:errors thay nội dung thẻ bằng message lỗi, tự xoá thẻ khi không có lỗi -->
+            <span class="error" th:errors="*{name}">Lỗi tên</span>
+        </div>
+
+        <div class="field" th:classappend="${#fields.hasErrors('email')} ? 'has-error'">
+            <label for="email">Email</label>
+            <input type="email" th:field="*{email}" th:errorclass="invalid" placeholder="an@example.com">
+            <span class="error" th:errors="*{email}">Lỗi email</span>
+        </div>
+
+        <div class="field" th:classappend="${#fields.hasErrors('departmentId')} ? 'has-error'">
+            <label for="departmentId">Phòng ban</label>
+            <select th:field="*{departmentId}" th:errorclass="invalid">
+                <option value="">-- Chọn phòng ban --</option>
+                <option th:each="d : ${departments}" th:value="${d.id}" th:text="${d.name}">IT</option>
+            </select>
+            <span class="error" th:errors="*{departmentId}">Lỗi phòng ban</span>
+        </div>
+
+        <button type="submit">Lưu</button>
+        <a th:href="@{/employees/list}">Huỷ</a>
+    </form>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

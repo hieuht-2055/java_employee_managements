@@ -1,9 +1,25 @@
 spring:
   application:
     name: employee-management
+  datasource:
+    url: jdbc:postgresql://localhost:5433/employee_db
+    username: dev
+    password: ${DB_PASSWORD:dev}
+  jpa:
+    hibernate:
+      ddl-auto: validate      # Flyway tạo bảng; Hibernate chỉ kiểm tra entity khớp schema
+    open-in-view: false       # không giữ session tới lúc render view → map sang DTO trong service
+  thymeleaf:
+    cache: false              # sửa template là thấy ngay khi F5 (sau ./mvnw resources:resources)
+  # Flyway tự chạy file trong src/main/resources/db/migration lúc khởi động (≈ rails db:migrate)
 
 server:
   port: 8080
+  servlet:
+    session:
+      # Flash (RedirectAttributes) cần session. Mặc định Tomcat vừa đặt cookie vừa nhét ;jsessionid=...
+      # vào URL redirect lần đầu → chỉ dùng cookie cho URL sạch.
+      tracking-modes: cookie
 
 app:
   employee-code-prefix: EMP     # Lab 2: UtilityService đọc qua @Value
