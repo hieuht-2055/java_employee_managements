@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 
 import com.example.employeemanagement.TestcontainersConfiguration;
 import com.example.employeemanagement.department.Department;
@@ -21,6 +22,7 @@ import com.example.employeemanagement.department.DepartmentRepository;
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Import(TestcontainersConfiguration.class)
+@ActiveProfiles("test")   // không bật profile mặc định dev → không chạy DevSampleDataSeeder
 class EmployeeRepositoryTest {
 
     @Autowired

@@ -1,0 +1,19 @@
+# Profile dev: máy local (≈ config/environments/development.rb)
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/employee_db
+    username: dev
+    password: ${DB_PASSWORD:dev}
+  thymeleaf:
+    cache: false              # sửa template là thấy ngay khi F5 (sau ./mvnw resources:resources)
+
+management:
+  endpoint:
+    health:
+      show-details: always    # dev: xem chi tiết db, diskSpace... trong /actuator/health
+
+logging:
+  level:
+    com.example.employeemanagement: DEBUG
+    org.hibernate.SQL: DEBUG                        # in câu SQL (≈ log ActiveRecord ở development)
+    org.hibernate.orm.jdbc.bind: TRACE              # in giá trị tham số bind vào SQL

@@ -11,12 +11,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -31,7 +37,9 @@ import com.example.employeemanagement.department.DepartmentRepository;
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
+@ActiveProfiles("test")   // không bật profile mặc định dev → không chạy DevSampleDataSeeder
 @Transactional
+@ExtendWith(OutputCaptureExtension.class)   // Lab 7: bắt stdout/log để kiểm tra nội dung log
 class EmployeeApiTest {
 
     @Autowired
@@ -131,6 +139,22 @@ class EmployeeApiTest {
         mvc.perform(delete(location)).andExpect(status().isNoContent());
         mvc.perform(get(location)).andExpect(status().isNotFound());
         mvc.perform(delete(location)).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void createUpdateDelete_areLoggedWithoutPersonalData(CapturedOutput output) throws Exception {
+        String location = postEmployee(body("Log Test", "log@example.com"))
+            .andReturn().getResponse().getHeader("Location");
+        String id = location.substring(location.lastIndexOf('/') + 1);
+
+        mvc.perform(put(location).contentType(MediaType.APPLICATION_JSON).content(body("Log Test 2", "log@example.com")));
+        mvc.perform(delete(location));
+
+        assertThat(output)
+            .contains("Created employee id=" + id)
+            .contains("Updated employee id=" + id)
+            .contains("Deleted employee id=" + id)
+            .doesNotContain("log@example.com");
     }
 
     @Test

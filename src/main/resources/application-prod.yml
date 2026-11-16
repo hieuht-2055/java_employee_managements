@@ -1,0 +1,24 @@
+# Profile prod (≈ config/environments/production.rb). Chạy: SPRING_PROFILES_ACTIVE=prod
+# Thông tin DB lấy từ biến môi trường, KHÔNG có giá trị mặc định
+# → thiếu biến là app dừng ngay lúc khởi động thay vì nối nhầm DB.
+# Lưu ý: Spring KHÔNG báo "thiếu DB_URL" mà giữ nguyên chuỗi "${DB_URL}" làm giá trị,
+# nên lỗi cuối cùng trong log là: 'url' must start with "jdbc".
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  thymeleaf:
+    cache: true
+
+management:
+  endpoint:
+    health:
+      show-details: never     # không lộ thông tin hạ tầng ra ngoài
+
+logging:
+  level:
+    root: INFO
+    com.example.employeemanagement: INFO
+  file:
+    name: logs/employee-management.log   # Logback tự xoay vòng file (mặc định 10MB/file, giữ 7 ngày)

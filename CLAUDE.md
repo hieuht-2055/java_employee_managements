@@ -196,6 +196,10 @@ Phần học theo slide đã xong (tới Thymeleaf fragment). Giờ chuyển san
 - Trang lỗi chung phải là `templates/error.html` (gốc), KHÔNG phải `templates/error/error.html`. Thứ tự: `error/400.html` → `error/4xx.html` → `error.html` → Whitelabel. Curl không gửi `Accept: text/html` nên nhận JSON thay vì trang lỗi.
 - Flash/session lần đầu → Tomcat nhét `;jsessionid=` vào URL redirect → `server.servlet.session.tracking-modes: cookie`.
 - Boot 4: Flyway cần `spring-boot-starter-flyway` (+ `flyway-database-postgresql`); chỉ `flyway-core` thì không tự chạy. Test slice tách module: `spring-boot-starter-data-jpa-test` (`org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest`), `spring-boot-starter-webmvc-test` (`org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc`). Testcontainers 2.x: artifact `testcontainers-postgresql`, class `org.testcontainers.postgresql.PostgreSQLContainer`.
+- `${DB_URL}` không có biến môi trường → Spring giữ nguyên chuỗi `"${DB_URL}"` (không báo thiếu biến) → lỗi cuối `'url' must start with "jdbc"`.
+- `spring.profiles.default: dev` làm test cũng chạy profile dev (seeder, log DEBUG) → test gắn `@ActiveProfiles("test")`.
+- Cache mặc định (`ConcurrentMapCacheManager`) KHÔNG có hết hạn → TTL cần Caffeine (`spring.cache.caffeine.spec: expireAfterWrite=60s`). `@Cacheable`/`@Scheduled` cần `@EnableCaching`/`@EnableScheduling`, thiếu thì bị bỏ qua im lặng; `@Cacheable` gọi trong cùng class (self-invocation) không qua cache.
+- Actuator mặc định chỉ mở `/actuator/health` qua HTTP; mở thêm bằng `management.endpoints.web.exposure.include` (không dùng `*`). Boot 4 dùng Jackson 3: package `tools.jackson.databind`.
 - Trong `GlobalExceptionHandler` / class lồng: class lồng không `static` là inner class → bên ngoài không thấy tên.
 
 ---
@@ -216,7 +220,7 @@ Phần học theo slide đã xong (tới Thymeleaf fragment). Giờ chuyển san
 
 ## 9. Trạng thái mini project hiện tại
 
-**Đã xong: Lab 1–6** (13/11/2026). Chạy: `docker compose up -d && ./mvnw spring-boot:run`; test: `./mvnw test` (28 test, cần Docker cho Testcontainers).
+**Đã xong: Lab 1–8** (16/11/2026). Chạy: `docker compose up -d && ./mvnw spring-boot:run` (profile mặc định `dev`); prod: `SPRING_PROFILES_ACTIVE=prod DB_URL=... DB_USERNAME=... DB_PASSWORD=... java -jar target/employee-management-0.0.1-SNAPSHOT.jar`; test: `./mvnw test` (32 test, cần Docker cho Testcontainers).
 
 | Lab | File | Nội dung |
 |---|---|---|
@@ -231,7 +235,12 @@ Phần học theo slide đã xong (tới Thymeleaf fragment). Giờ chuyển san
 | 5 | `common/ResourceNotFoundException`, `DuplicateResourceException` | Có `@ResponseStatus` → trang web dùng `templates/error/404.html`, `templates/error.html` |
 | 6 | `employee/EmployeePageController`, `EmployeeForm` | `/employees/list`, `/employees/add` (GET form, POST validate + PRG + flash, email trùng → `rejectValue`), `/employees/search?name=&departmentId=`; `@ModelAttribute("departments")` |
 | 6 | `templates/fragments/layout.html`, `employees/{list,form,search}.html`, `static/css/app.css` | Fragment `head(title)`, `header`, `employeeTable(employees)`, `footer` |
+| 7 | `application.yml` + `application-dev.yml` / `application-prod.yml` | Chung: JPA, cache, actuator, `spring.profiles.default: dev`. dev: DB localhost:5433, log DEBUG + SQL, health chi tiết. prod: DB từ env `DB_URL/DB_USERNAME/DB_PASSWORD` (không default), log INFO ra `logs/employee-management.log`, health ẩn chi tiết |
+| 7 | `employee/EmployeeService` (SLF4J), `config/DevSampleDataSeeder` | Log INFO khi thêm/sửa/xoá (chỉ id/code, không log email), WARN khi bị từ chối, DEBUG khi tìm kiếm; seeder `@Profile("dev")` `ApplicationRunner` tạo 5 nhân viên khi bảng trống |
+| 8 | `config/CacheConfig`, `report/EmployeeReportService`, `EmployeeReportController` | `@EnableCaching`; `@Cacheable("employeeCount")` + Caffeine `expireAfterWrite=60s`; `GET /api/reports/employee-count` → `{totalEmployees, generatedAt}` (cố ý không `@CacheEvict`, chấp nhận trễ ≤ 1 phút) |
+| 8 | `config/SchedulingConfig`, `common/SystemHeartbeatTask` | `@EnableScheduling`; `@Scheduled(fixedRateString = "${app.heartbeat-interval:30s}")` log "System running" |
+| 8 | Actuator | Mở `health,info,metrics,caches` (`/actuator/env` → 404); `info.app.version` lấy từ pom qua `@project.version@` |
 
-**Test** (`src/test`): `TestcontainersConfiguration` (Postgres 17, `@ServiceConnection`), `EmployeeRepositoryTest` (`@DataJpaTest`), `EmployeeApiTest`, `EmployeePageTest`, `HelloAndBeanDemoTest` (`@SpringBootTest` + `@AutoConfigureMockMvc` + `@Transactional` rollback), `UtilityServiceTest` (unit).
+**Test** (`src/test`): `TestcontainersConfiguration` (Postgres 17, `@ServiceConnection`), `EmployeeRepositoryTest` (`@DataJpaTest`), `EmployeeApiTest`, `EmployeePageTest`, `HelloAndBeanDemoTest`, `ReportCacheAndActuatorTest` (cache, actuator, scheduled task) (`@SpringBootTest` + `@AutoConfigureMockMvc` + `@Transactional` rollback + `@ActiveProfiles("test")`), log kiểm tra bằng `OutputCaptureExtension` trong `EmployeeApiTest`, `UtilityServiceTest` (unit).
 
-**Lab 7 cần làm**: log (SLF4J) khi thêm/sửa/xoá nhân viên trong `EmployeeService`; tách `application-dev.yml` / `application-prod.yml` (datasource, log level), seed nhân viên mẫu cho profile `dev`.
+**Lab 9 cần làm**: thay `spring-security-crypto` bằng `spring-boot-starter-security`; entity `AppUser` (username, password BCrypt, role) + Flyway V3; `UserDetailsService` đọc DB; đăng ký + đăng nhập trả JWT; USER chỉ GET, ADMIN CRUD (`/api/employees/**`, trang `/employees/add`); `AuthenticationEntryPoint`/`AccessDeniedHandler` trả ProblemDetail 401/403; để `/actuator/health` công khai, các actuator khác chỉ ADMIN; cập nhật test (`@WithMockUser`).

@@ -1,17 +1,23 @@
+# Cấu hình CHUNG cho mọi môi trường (≈ config/application.rb).
+# Phần riêng nằm ở application-dev.yml / application-prod.yml (≈ config/environments/*.rb).
+# Thứ tự ưu tiên: tham số dòng lệnh > biến môi trường > application-{profile}.yml > file này.
 spring:
   application:
     name: employee-management
-  datasource:
-    url: jdbc:postgresql://localhost:5433/employee_db
-    username: dev
-    password: ${DB_PASSWORD:dev}
+  profiles:
+    # Không chỉ định profile thì dùng dev (≈ RAILS_ENV mặc định development).
+    # Production chạy với SPRING_PROFILES_ACTIVE=prod.
+    default: dev
   jpa:
     hibernate:
       ddl-auto: validate      # Flyway tạo bảng; Hibernate chỉ kiểm tra entity khớp schema
     open-in-view: false       # không giữ session tới lúc render view → map sang DTO trong service
-  thymeleaf:
-    cache: false              # sửa template là thấy ngay khi F5 (sau ./mvnw resources:resources)
   # Flyway tự chạy file trong src/main/resources/db/migration lúc khởi động (≈ rails db:migrate)
+  cache:
+    # Lab 8: Caffeine, mỗi entry hết hạn 60 giây sau khi ghi
+    cache-names: employeeCount
+    caffeine:
+      spec: maximumSize=100,expireAfterWrite=60s
 
 server:
   port: 8080
@@ -21,5 +27,22 @@ server:
       # vào URL redirect lần đầu → chỉ dùng cookie cho URL sạch.
       tracking-modes: cookie
 
+management:
+  endpoints:
+    web:
+      exposure:
+        # Mặc định Actuator chỉ mở /actuator/health qua HTTP. Mở thêm từng endpoint cần dùng,
+        # KHÔNG dùng "*" (lộ env, beans, heapdump...).
+        include: health,info,metrics,caches
+  info:
+    env:
+      enabled: true           # cho phép /actuator/info đọc các key info.* bên dưới
+
+info:
+  app:
+    name: Employee Management System
+    version: '@project.version@'   # Maven thay bằng version trong pom.xml lúc build
+
 app:
   employee-code-prefix: EMP     # Lab 2: UtilityService đọc qua @Value
+  heartbeat-interval: 30s       # Lab 8: chu kỳ log "System running"

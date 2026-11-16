@@ -11,12 +11,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 // Lab 1 + 2: /hello và bean demo. Cùng cấu hình với các test khác → dùng lại Spring context đã cache.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
+@ActiveProfiles("test")   // không bật profile mặc định dev → không chạy DevSampleDataSeeder
 class HelloAndBeanDemoTest {
 
     @Autowired
