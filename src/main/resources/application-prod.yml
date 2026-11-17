@@ -22,3 +22,8 @@ logging:
     com.example.employeemanagement: INFO
   file:
     name: logs/employee-management.log   # Logback tự xoay vòng file (mặc định 10MB/file, giữ 7 ngày)
+
+app:
+  jwt:
+    # Bắt buộc có biến môi trường JWT_SECRET (>= 32 byte), vd: openssl rand -base64 48
+    secret: ${JWT_SECRET}

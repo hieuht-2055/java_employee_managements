@@ -31,7 +31,7 @@
 | Project | `~/environment/java_employee_managements`, artifact `employee-management`, package `com.example.employeemanagement` |
 | Playground (tham khảo) | `~/environment/java-spring-learning`, package `com.example.playground` |
 
-**Dependency đang có trong `pom.xml`** (Boot 4 đã đổi tên một số starter):
+**Dependency playground** (mini project xem `pom.xml` của project; Boot 4 đã đổi tên một số starter):
 
 ```xml
 spring-boot-starter-webmvc        <!-- Boot 3: spring-boot-starter-web -->
@@ -200,6 +200,14 @@ Phần học theo slide đã xong (tới Thymeleaf fragment). Giờ chuyển san
 - `spring.profiles.default: dev` làm test cũng chạy profile dev (seeder, log DEBUG) → test gắn `@ActiveProfiles("test")`.
 - Cache mặc định (`ConcurrentMapCacheManager`) KHÔNG có hết hạn → TTL cần Caffeine (`spring.cache.caffeine.spec: expireAfterWrite=60s`). `@Cacheable`/`@Scheduled` cần `@EnableCaching`/`@EnableScheduling`, thiếu thì bị bỏ qua im lặng; `@Cacheable` gọi trong cùng class (self-invocation) không qua cache.
 - Actuator mặc định chỉ mở `/actuator/health` qua HTTP; mở thêm bằng `management.endpoints.web.exposure.include` (không dùng `*`). Boot 4 dùng Jackson 3: package `tools.jackson.databind`.
+- Security 7 (MFA): đăng nhập bằng mật khẩu xong, `Authentication` có thêm authority `FACTOR_PASSWORD`. Copy hết authorities vào JWT → token mang quyền giả `ROLE_FACTOR_PASSWORD` → chỉ lấy authority `ROLE_*`.
+- Boot 4 đổi tên starter: `spring-boot-starter-oauth2-resource-server` → `spring-boot-starter-security-oauth2-resource-server`; test: `spring-boot-starter-security-test`. Security 7.1 có `NimbusJwtEncoder.withSecretKey(key)` (không cần tự dựng `ImmutableSecret`/JWKSource). `DaoAuthenticationProvider` bắt buộc truyền `UserDetailsService` qua constructor.
+- Hai `SecurityFilterChain`: chain có `securityMatcher` phải `@Order` nhỏ hơn chain bắt tất cả; web chain phải `permitAll` cho `/error`, nếu không trang 404/500 của người chưa đăng nhập bị đá về `/login`.
+- `BadCredentialsException` ném TRONG controller (`/api/auth/login`) đi qua `@RestControllerAdvice` → phải có `@ExceptionHandler(AuthenticationException.class)`, không thì catch-all biến thành 500. Lỗi 401/403 trong filter thì cần `AuthenticationEntryPoint`/`AccessDeniedHandler` riêng.
+- JWT claim `roles` mặc định KHÔNG được đọc: `JwtAuthenticationConverter` mặc định lấy `scope`/`scp` và thêm `SCOPE_` → cấu hình `setAuthoritiesClaimName("roles")` + `setAuthorityPrefix("ROLE_")`.
+- `src/test/resources/application.yml` CHE file cùng tên ở `src/main/resources` → cấu hình riêng cho test đặt ở `application-test.yml` + `@ActiveProfiles("test")`.
+- BCrypt chỉ dùng 72 byte đầu (Security 7 ném lỗi nếu dài hơn) → `@Size(max = 72)` cho mật khẩu. Security 6+/7 redirect tới login bằng URL tương đối (`/login`).
+- JPQL thống kê: `left join Employee e on e.department = d` (join theo điều kiện, không cần `@OneToMany`) + `count(e.id)` (không phải `count(e)`/`count(*)`) để phòng ban 0 người ra 0. `select new pkg.Record(...)` cần tên class đầy đủ.
 - Trong `GlobalExceptionHandler` / class lồng: class lồng không `static` là inner class → bên ngoài không thấy tên.
 
 ---
@@ -220,12 +228,12 @@ Phần học theo slide đã xong (tới Thymeleaf fragment). Giờ chuyển san
 
 ## 9. Trạng thái mini project hiện tại
 
-**Đã xong: Lab 1–8** (16/11/2026). Chạy: `docker compose up -d && ./mvnw spring-boot:run` (profile mặc định `dev`); prod: `SPRING_PROFILES_ACTIVE=prod DB_URL=... DB_USERNAME=... DB_PASSWORD=... java -jar target/employee-management-0.0.1-SNAPSHOT.jar`; test: `./mvnw test` (32 test, cần Docker cho Testcontainers).
+**Đã xong: Lab 1–10** (17/11/2026). Chạy: `docker compose up -d && ./mvnw spring-boot:run` (profile mặc định `dev`); prod: `SPRING_PROFILES_ACTIVE=prod DB_URL=... DB_USERNAME=... DB_PASSWORD=... java -jar target/employee-management-0.0.1-SNAPSHOT.jar`; test: `./mvnw test` (55 test, cần Docker cho Testcontainers). Prod cần thêm `JWT_SECRET` (≥ 32 byte). Tài khoản dev: `admin`/`admin123` (ADMIN), `user`/`user1234` (USER).
 
 | Lab | File | Nội dung |
 |---|---|---|
 | 1 | `hello/HelloController` | `GET /hello`, `GET /hello?name=X` |
-| 2 | `common/UtilityService`, `config/AppConfig`, `demo/BeanDemoController` | `@Service` sinh mã EMP0001 / format tên / chuẩn hoá email; `@Bean PasswordEncoder` (chỉ `spring-security-crypto`, chưa bật Security); `/api/demo/password`, `/api/demo/format` |
+| 2 | `common/UtilityService`, `config/AppConfig`, `demo/BeanDemoController` | `@Service` sinh mã EMP0001 / format tên / chuẩn hoá email; `@Bean PasswordEncoder` (chỉ `spring-security-crypto`, chưa bật Security); `/api/demo/password`, `/api/demo/format` (Lab 9: thay `spring-security-crypto` bằng `spring-boot-starter-security`) |
 | 4 | `db/migration/V1__create_department_and_employee.sql`, `V2__seed_departments.sql` | Bảng `department`, `employee` (id, code, name, email unique, department_id FK); seed IT/HR/Sales |
 | 4 | `department/*` | Entity `Department`, `DepartmentRepository`, `DepartmentService` (`getEntity` cho EmployeeService), `GET/POST /api/departments` |
 | 4 | `employee/Employee`, `EmployeeRepository` | `@ManyToOne(LAZY)`; `search(name, departmentId)` bằng `@Query` + JOIN FETCH (null = bỏ lọc); `findWithDepartmentById` (`@EntityGraph`) |
@@ -240,7 +248,15 @@ Phần học theo slide đã xong (tới Thymeleaf fragment). Giờ chuyển san
 | 8 | `config/CacheConfig`, `report/EmployeeReportService`, `EmployeeReportController` | `@EnableCaching`; `@Cacheable("employeeCount")` + Caffeine `expireAfterWrite=60s`; `GET /api/reports/employee-count` → `{totalEmployees, generatedAt}` (cố ý không `@CacheEvict`, chấp nhận trễ ≤ 1 phút) |
 | 8 | `config/SchedulingConfig`, `common/SystemHeartbeatTask` | `@EnableScheduling`; `@Scheduled(fixedRateString = "${app.heartbeat-interval:30s}")` log "System running" |
 | 8 | Actuator | Mở `health,info,metrics,caches` (`/actuator/env` → 404); `info.app.version` lấy từ pom qua `@project.version@` |
+| 9 | `db/migration/V3__create_app_user.sql`, `auth/AppUser`, `Role`, `AppUserRepository`, `AppUserDetailsService` | Bảng `app_user` (username unique, password BCrypt, role USER/ADMIN); `UserDetailsService` đọc DB |
+| 9 | `auth/jwt/JwtProperties`, `JwtConfig`, `JwtTokenService` | `@ConfigurationProperties("app.jwt")` (secret ≥ 32 byte, ttl 1h); `JwtEncoder`/`JwtDecoder` HS256; claim `roles` (chỉ `ROLE_*`) |
+| 9 | `auth/AuthService`, `AuthController` | `POST /api/auth/register` (luôn USER, 409 trùng), `POST /api/auth/login` → `{accessToken, tokenType, expiresIn, username, roles}`, `GET /api/auth/me` |
+| 9 | `config/SecurityConfig`, `auth/ProblemDetailSecurityErrorHandler` | Chain 1 (`/api/**`, `/actuator/**`): JWT stateless, CSRF tắt; GET → USER/ADMIN, ghi → ADMIN; `/api/auth/register|login`, `/api/demo/**`, `/actuator/health|info` công khai, actuator khác ADMIN; 401/403 → ProblemDetail. Chain 2 (web): form login `/login`, `/register`, `/employees/add` ADMIN, còn lại cần đăng nhập, logout POST |
+| 9 | `auth/AuthPageController`, `RegisterForm`, `templates/auth/{login,register}.html`, `error/403.html`, `fragments/layout.html` | Trang đăng nhập/đăng ký (`@AssertTrue` nhập lại mật khẩu); header dùng `sec:authorize`/`sec:authentication` (`thymeleaf-extras-springsecurity6`) |
+| 9 | `config/DevSampleDataSeeder` | Thêm tài khoản `admin`/`admin123`, `user`/`user1234` (chỉ dev; migration không seed admin) |
+| 10 | `report/EmployeeStatisticsRepository` | `extends Repository<Employee, Long>` (chỉ đọc); `@Query` count tổng, count phòng ban, `select new DepartmentEmployeeCount(...)` LEFT JOIN + GROUP BY |
+| 10 | `report/EmployeeStatisticsService`, `EmployeeReportController`, `StatisticsPageController`, `templates/employees/statistics.html` | Tỉ lệ % (làm tròn 1 chữ số, chia 0 → 0); `GET /api/reports/statistics`; trang `/employees/statistics` (thẻ tổng + bảng + thanh %) |
 
-**Test** (`src/test`): `TestcontainersConfiguration` (Postgres 17, `@ServiceConnection`), `EmployeeRepositoryTest` (`@DataJpaTest`), `EmployeeApiTest`, `EmployeePageTest`, `HelloAndBeanDemoTest`, `ReportCacheAndActuatorTest` (cache, actuator, scheduled task) (`@SpringBootTest` + `@AutoConfigureMockMvc` + `@Transactional` rollback + `@ActiveProfiles("test")`), log kiểm tra bằng `OutputCaptureExtension` trong `EmployeeApiTest`, `UtilityServiceTest` (unit).
+**Test** (`src/test`): `TestcontainersConfiguration` (Postgres 17, `@ServiceConnection`), `EmployeeRepositoryTest` (`@DataJpaTest`), `EmployeeApiTest`, `EmployeePageTest`, `HelloAndBeanDemoTest`, `ReportCacheAndActuatorTest` (cache, actuator, scheduled task), `EmployeeStatisticsTest` (Lab 10), `AuthApiSecurityTest` (JWT thật: register/login/401/403/token giả), `WebSecurityTest` (form login, CSRF, quyền trang) (`@SpringBootTest` + `@AutoConfigureMockMvc` + `@Transactional` rollback + `@ActiveProfiles("test")` + `@WithMockUser` khi không test xác thực); `src/test/resources/application-test.yml` chứa JWT secret cho test, log kiểm tra bằng `OutputCaptureExtension` trong `EmployeeApiTest`, `UtilityServiceTest` (unit).
 
-**Lab 9 cần làm**: thay `spring-security-crypto` bằng `spring-boot-starter-security`; entity `AppUser` (username, password BCrypt, role) + Flyway V3; `UserDetailsService` đọc DB; đăng ký + đăng nhập trả JWT; USER chỉ GET, ADMIN CRUD (`/api/employees/**`, trang `/employees/add`); `AuthenticationEntryPoint`/`AccessDeniedHandler` trả ProblemDetail 401/403; để `/actuator/health` công khai, các actuator khác chỉ ADMIN; cập nhật test (`@WithMockUser`).
+**Gợi ý làm thêm (ngoài 10 lab)**: thống kê xu hướng (thêm cột `created_at` qua Flyway V4 + `@NativeQuery` `date_trunc('month', ...)`); trang sửa/xoá nhân viên trên web (ADMIN); `@CacheEvict` khi thêm/xoá để báo cáo cập nhật ngay; refresh token / thu hồi token; phân trang danh sách (`Pageable`).

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- Fragment dùng chung (≈ app/views/shared/_*.html.erb). Không controller nào render file này trực tiếp.
      Gọi: th:replace="~{fragments/layout :: head('Tiêu đề')}" -->
-<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 
 <head th:fragment="head(title)">
     <meta charset="UTF-8">
@@ -12,12 +12,28 @@
 
 <body>
 
+<!-- sec:authorize (thymeleaf-extras-springsecurity6) ≈ "if user_signed_in?" / "if can?" trong view Rails.
+     Chỉ ẩn link cho gọn giao diện; quyền thật sự vẫn do SecurityConfig chặn ở server. -->
 <header th:fragment="header" class="site-header">
     <strong>Employee Management</strong>
-    <nav>
+    <nav sec:authorize="isAuthenticated()">
         <a th:href="@{/employees/list}">Danh sách</a>
-        <a th:href="@{/employees/add}">+ Thêm nhân viên</a>
+        <a th:href="@{/employees/add}" sec:authorize="hasRole('ADMIN')">+ Thêm nhân viên</a>
         <a th:href="@{/employees/search}">Tìm kiếm</a>
+        <a th:href="@{/employees/statistics}">Thống kê</a>
+    </nav>
+    <div class="user-box" sec:authorize="isAuthenticated()">
+        <span sec:authentication="name">admin</span>
+        <span class="role" sec:authorize="hasRole('ADMIN')">ADMIN</span>
+        <span class="role" sec:authorize="!hasRole('ADMIN')">USER</span>
+        <!-- Đăng xuất phải là POST (kèm _csrf tự chèn) để trang khác không lừa trình duyệt gọi GET /logout -->
+        <form th:action="@{/logout}" method="post" class="inline">
+            <button type="submit">Đăng xuất</button>
+        </form>
+    </div>
+    <nav sec:authorize="!isAuthenticated()">
+        <a th:href="@{/login}">Đăng nhập</a>
+        <a th:href="@{/register}">Đăng ký</a>
     </nav>
 </header>
 

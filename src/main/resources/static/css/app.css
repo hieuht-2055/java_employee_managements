@@ -18,3 +18,14 @@ button { padding: .45rem 1rem; cursor: pointer; }
 .errors { border: 1px solid #d33; padding: .5rem .75rem; color: #d33; }
 .has-error label { color: #d33; }
 .flash { background: #2a24; padding: .5rem .75rem; }
+/* Lab 9: khu vực tài khoản trên header, trang đăng nhập/đăng ký */
+.user-box { margin-left: auto; display: flex; gap: .5rem; align-items: center; }
+.user-box .role { font-size: .75rem; padding: .1rem .4rem; border: 1px solid #8888; border-radius: 4px; }
+form.inline { display: inline; margin: 0; }
+main.narrow { max-width: 420px; }
+/* Lab 10: thanh tỉ lệ trên trang thống kê */
+.bar { background: #8883; height: .9rem; border-radius: 3px; min-width: 120px; }
+.bar > span { display: block; height: 100%; background: #3a7bd5; border-radius: 3px; }
+.stat-cards { display: flex; gap: 1rem; margin: 1rem 0; flex-wrap: wrap; }
+.stat-card { border: 1px solid #8886; border-radius: 6px; padding: .75rem 1.25rem; }
+.stat-card strong { display: block; font-size: 1.6rem; }

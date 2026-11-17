@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<!-- Trang web bị từ chối quyền (vd. USER mở /employees/add). API thì trả ProblemDetail JSON. -->
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Không có quyền')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+<main>
+    <h1>403 · Không có quyền truy cập</h1>
+    <p>Tài khoản của bạn không được phép mở <code th:text="${path}">/employees/add</code>.</p>
+    <p><a th:href="@{/employees/list}">Về danh sách nhân viên</a></p>
+</main>
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

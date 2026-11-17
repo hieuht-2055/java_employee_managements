@@ -2,6 +2,7 @@ package com.example.employeemanagement.employee;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +33,7 @@ import com.example.employeemanagement.employee.dto.EmployeeRequest;
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
 @ActiveProfiles("test")   // không bật profile mặc định dev → không chạy DevSampleDataSeeder
+@WithMockUser(roles = "ADMIN")   // Lab 9: giả lập đã đăng nhập ADMIN (không cần token thật)
 @Transactional
 class EmployeePageTest {
 
@@ -73,7 +76,7 @@ class EmployeePageTest {
 
     @Test
     void add_invalid_rerendersFormWithErrors() throws Exception {
-        mvc.perform(post("/employees/add").param("name", "").param("email", "abc").param("departmentId", ""))
+        mvc.perform(post("/employees/add").with(csrf()).param("name", "").param("email", "abc").param("departmentId", ""))
             .andExpect(status().isOk())
             .andExpect(view().name("employees/form"))
             .andExpect(model().attributeHasFieldErrors("employeeForm", "name", "email", "departmentId"))
@@ -82,7 +85,7 @@ class EmployeePageTest {
 
     @Test
     void add_duplicateEmail_showsErrorOnEmailField() throws Exception {
-        mvc.perform(post("/employees/add")
+        mvc.perform(post("/employees/add").with(csrf())
                 .param("name", "An khác").param("email", "AN@page.com").param("departmentId", itId.toString()))
             .andExpect(status().isOk())
             .andExpect(model().attributeHasFieldErrorCode("employeeForm", "email", "duplicate"));
@@ -90,7 +93,7 @@ class EmployeePageTest {
 
     @Test
     void add_valid_redirectsToListWithFlash() throws Exception {
-        mvc.perform(post("/employees/add")
+        mvc.perform(post("/employees/add").with(csrf())
                 .param("name", "lê văn cường").param("email", "cuong@page.com").param("departmentId", hrId.toString()))
             .andExpect(status().is3xxRedirection())
             .andExpect(redirectedUrl("/employees/list"))

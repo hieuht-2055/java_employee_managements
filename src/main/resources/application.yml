@@ -46,3 +46,6 @@ info:
 app:
   employee-code-prefix: EMP     # Lab 2: UtilityService đọc qua @Value
   heartbeat-interval: 30s       # Lab 8: chu kỳ log "System running"
+  jwt:                          # Lab 9: secret đặt riêng ở từng profile (dev/prod/test)
+    ttl: 1h                     # token hết hạn sau 1 giờ
+    issuer: employee-management

@@ -25,11 +25,17 @@
 			<artifactId>spring-boot-starter-webmvc</artifactId>
 		</dependency>
 
-		<!-- Lab 2: chỉ lấy PasswordEncoder, KHÔNG kéo cả Spring Security (tránh mọi endpoint bị 401).
-		     Version do spring-boot-starter-parent quản lý. Lab 9 sẽ thay bằng spring-boot-starter-security. -->
+		<!-- Lab 9: Spring Security (đã gồm spring-security-crypto dùng cho PasswordEncoder ở Lab 2).
+		     Thêm vào là MỌI endpoint bị khoá ngay (secure by default) cho tới khi cấu hình SecurityFilterChain. -->
 		<dependency>
-			<groupId>org.springframework.security</groupId>
-			<artifactId>spring-security-crypto</artifactId>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+		<!-- Lab 9: JWT (Nimbus) — tự phát hành và kiểm tra token bằng khoá bí mật HS256.
+		     Boot 4 đổi tên: Boot 3 là spring-boot-starter-oauth2-resource-server -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security-oauth2-resource-server</artifactId>
 		</dependency>
 
 		<!-- Lab 4: JPA + Postgres + migration (≈ ActiveRecord + pg gem + db/migrate) -->
@@ -64,6 +70,11 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-thymeleaf</artifactId>
 		</dependency>
+		<!-- Lab 9: sec:authorize / sec:authentication trong template (≈ helper current_user, can?) -->
+		<dependency>
+			<groupId>org.thymeleaf.extras</groupId>
+			<artifactId>thymeleaf-extras-springsecurity6</artifactId>
+		</dependency>
 
 		<!-- Lab 8: Actuator (/actuator/health, /actuator/metrics) -->
 		<dependency>
@@ -95,6 +106,12 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- Lab 9: @WithMockUser, csrf(), formLogin() cho MockMvc -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<!-- Test chạy trên Postgres thật trong Docker (Testcontainers 2.x đổi tên artifact thành testcontainers-*) -->

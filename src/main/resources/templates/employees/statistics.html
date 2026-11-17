@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Thống kê nhân viên')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+
+<main>
+    <h1>Thống kê nhân viên</h1>
+
+    <div class="stat-cards">
+        <div class="stat-card">Tổng số nhân viên <strong th:text="${stats.totalEmployees}">5</strong></div>
+        <div class="stat-card">Số phòng ban <strong th:text="${stats.totalDepartments}">3</strong></div>
+    </div>
+
+    <h2>Theo phòng ban</h2>
+    <table>
+        <thead>
+        <tr><th>Phòng ban</th><th>Số nhân viên</th><th>Tỉ lệ</th><th></th></tr>
+        </thead>
+        <tbody>
+        <tr th:each="d : ${stats.byDepartment}">
+            <td th:text="${d.departmentName}">IT</td>
+            <td th:text="${d.employeeCount}">2</td>
+            <!-- #numbers.formatDecimal(số, phần nguyên tối thiểu, số chữ số thập phân) -->
+            <td th:text="${#numbers.formatDecimal(d.percentage, 1, 1)} + '%'">40.0%</td>
+            <!-- th:style dựng CSS từ dữ liệu: thanh dài theo tỉ lệ -->
+            <td><div class="bar"><span th:style="'width:' + ${d.percentage} + '%'"></span></div></td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

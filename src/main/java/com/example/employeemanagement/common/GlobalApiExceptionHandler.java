@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -68,6 +70,19 @@ public class GlobalApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(DuplicateResourceException.class)
     ProblemDetail handleDuplicate(DuplicateResourceException ex) {
         return problem(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    // Lab 9: lỗi xác thực ném ra TRONG controller (vd. sai mật khẩu ở /api/auth/login).
+    // ResponseEntityExceptionHandler không xử lý 2 loại này → thiếu handler là rơi vào catch-all thành 500.
+    // (Lỗi 401/403 trong filter chain thì do ProblemDetailSecurityErrorHandler xử lý.)
+    @ExceptionHandler(AuthenticationException.class)
+    ProblemDetail handleAuthentication(AuthenticationException ex) {
+        return problem(HttpStatus.UNAUTHORIZED, "Sai username hoặc mật khẩu");
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    ProblemDetail handleAccessDenied(AccessDeniedException ex) {
+        return problem(HttpStatus.FORBIDDEN, "Bạn không có quyền thực hiện thao tác này");
     }
 
     // Lỗi không lường trước → 500, log đầy đủ stack trace nhưng không lộ chi tiết ra client

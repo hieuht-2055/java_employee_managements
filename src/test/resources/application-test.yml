@@ -1,0 +1,5 @@
+# Profile test (@ActiveProfiles("test")). Đặt tên application-test.yml chứ KHÔNG đặt application.yml:
+# src/test/resources/application.yml sẽ CHE MẤT file cùng tên ở src/main/resources.
+app:
+  jwt:
+    secret: test-only-jwt-secret-0123456789abcdef-0123456789

@@ -17,3 +17,8 @@ logging:
     com.example.employeemanagement: DEBUG
     org.hibernate.SQL: DEBUG                        # in câu SQL (≈ log ActiveRecord ở development)
     org.hibernate.orm.jdbc.bind: TRACE              # in giá trị tham số bind vào SQL
+
+app:
+  jwt:
+    # Chỉ dùng ở máy local. KHÔNG dùng lại cho prod.
+    secret: dev-only-jwt-secret-change-me-0123456789abcdef

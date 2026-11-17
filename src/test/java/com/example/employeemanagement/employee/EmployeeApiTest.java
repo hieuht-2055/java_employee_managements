@@ -22,6 +22,7 @@ import org.springframework.boot.test.system.CapturedOutput;
 import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -38,6 +39,7 @@ import com.example.employeemanagement.department.DepartmentRepository;
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
 @ActiveProfiles("test")   // không bật profile mặc định dev → không chạy DevSampleDataSeeder
+@WithMockUser(roles = "ADMIN")   // Lab 9: giả lập đã đăng nhập ADMIN (không cần token thật)
 @Transactional
 @ExtendWith(OutputCaptureExtension.class)   // Lab 7: bắt stdout/log để kiểm tra nội dung log
 class EmployeeApiTest {

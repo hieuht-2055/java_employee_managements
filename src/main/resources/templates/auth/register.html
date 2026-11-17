@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Đăng ký')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+
+<main class="narrow">
+    <h1>Đăng ký</h1>
+    <p>Tài khoản mới có quyền <strong>USER</strong> (chỉ xem danh sách nhân viên).</p>
+
+    <form th:action="@{/register}" th:object="${registerForm}" method="post" novalidate>
+        <div class="field" th:classappend="${#fields.hasErrors('username')} ? 'has-error'">
+            <label for="username">Username</label>
+            <input type="text" th:field="*{username}" th:errorclass="invalid" autocomplete="username">
+            <span class="error" th:errors="*{username}">Lỗi username</span>
+        </div>
+        <div class="field" th:classappend="${#fields.hasErrors('password')} ? 'has-error'">
+            <label for="password">Mật khẩu</label>
+            <!-- th:field với type=password KHÔNG điền lại giá trị cũ khi render lại form (cố ý, vì bảo mật) -->
+            <input type="password" th:field="*{password}" th:errorclass="invalid" autocomplete="new-password">
+            <span class="error" th:errors="*{password}">Lỗi mật khẩu</span>
+        </div>
+        <div class="field" th:classappend="${#fields.hasErrors('passwordConfirmed')} ? 'has-error'">
+            <label for="confirmPassword">Nhập lại mật khẩu</label>
+            <input type="password" th:field="*{confirmPassword}" autocomplete="new-password">
+            <span class="error" th:errors="*{passwordConfirmed}">Mật khẩu không khớp</span>
+        </div>
+        <button type="submit">Đăng ký</button>
+        <a th:href="@{/login}">Đã có tài khoản? Đăng nhập</a>
+    </form>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

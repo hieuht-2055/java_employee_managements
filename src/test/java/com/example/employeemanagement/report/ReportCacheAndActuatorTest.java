@@ -16,6 +16,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Import;
 import org.springframework.scheduling.config.ScheduledTaskHolder;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +35,7 @@ import tools.jackson.databind.ObjectMapper;
 @AutoConfigureMockMvc
 @Import(TestcontainersConfiguration.class)
 @ActiveProfiles("test")
+@WithMockUser(roles = "ADMIN")   // Lab 9: giả lập đã đăng nhập ADMIN (không cần token thật)
 @Transactional
 class ReportCacheAndActuatorTest {
 
